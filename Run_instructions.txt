@@ -1,0 +1,91 @@
+
+End-to-End Real-Time Stock Market Data Pipeline
+
+OVERVIEW
+This project is a complete data engineering pipeline designed to ingest, process, and store real-time stock market data. It mimics a modern enterprise architecture using Apache Kafka for ingestion, Apache Spark for stream processing, and Delta Lake for ACID-compliant storage.
+
+The pipeline begins locally using Docker containers for infrastructure and migrates the processed "Bronze" layer data to the cloud (Azure Data Lake Gen2) for analysis in Azure Databricks.
+
+ARCHITECTURE
+
+Data Flow: Yahoo Finance API -> Kafka -> Spark Streaming -> MinIO (Delta Lake) -> Azure ADLS Gen2 -> Azure Databricks
+
+Ingestion Layer: Python producer fetches live stock data (AAPL, TSLA, etc.) and pushes JSON messages to a Kafka topic.
+
+Message Broker: Apache Kafka decouples producers from consumers, handling backpressure and ensuring reliable data delivery.
+
+Processing Layer: Apache Spark Structured Streaming reads from Kafka, applies schema validation, and adds processing timestamps.
+
+Storage Layer (Local): MinIO serves as a local S3-compatible object store, saving data in Delta Lake format (Parquet files + Transaction Logs).
+
+Cloud Data Warehouse: Data is migrated to Azure Blob Storage (ADLS Gen2) and ingested into Azure Databricks for SQL analytics.
+
+TECH STACK
+
+Languages: Python (PySpark, Kafka-Python), SQL
+
+Infrastructure: Docker, Docker Compose
+
+Streaming & Processing: Apache Kafka, Apache Spark 3.3
+
+Storage & Formats: MinIO (S3), Delta Lake (Bronze Layer), Parquet
+
+Cloud: Azure Data Lake Storage (ADLS) Gen2, Azure Databricks
+
+LOCAL RUN STEPS:
+
+1. docker-compose up -d  -- spins up containers Kafka, Zookeeper, Spark, MinIO ( defined in docker-compose.yaml file)
+2. Initialize Data Lake
+
+Access MinIO at http://localhost:9001 (User/Pass: minioadmin).
+
+Create a bucket named datalake.
+
+3.Start Ingestion (Producer)
+
+This script acts as the source system, generating events.
+# Install dependencies (written in requirements.txt)
+pip install kafka-python-ng yfinance 
+
+# Run producer
+python producer.py
+
+---Output looks like this:
+
+Kafka Producer connected successfully.
+Starting data stream for: ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
+Press Ctrl+C to stop.
+Sent: AAPL - $277.06
+Sent: GOOGL - $317.67
+Sent: MSFT - $479.03
+Sent: AMZN - $231.42
+Sent: TSLA - $444.45
+
+4. Start Processing (Spark Streaming)
+
+Submit the Spark job to the cluster. This job reads from Kafka and writes Delta tables to MinIO.
+
+# Copy script to container
+docker cp spark_streaming.py spark-master:/opt/bitnami/spark/
+
+#Submit job ( Final step)
+docker exec -it spark-master spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.2,io.delta:delta-core_2.12:2.3.0,org.apache.hadoop:hadoop-aws:3.3.2,com.amazonaws:aws-java-sdk-bundle:1.11.1026 /opt/bitnami/spark/spark_streaming.py
+
+
+-- the job will start running and it start injesting file to MinIO
+-- Output should look like this:
+25/12/10 15:40:26 INFO BlockManagerMasterEndpoint: Registering block manager dbaf2d02e1ed:43245 wi25/12/10 15:40:28 WARN MetricsConfig: Cannot locate configuration: tried hadoop-metrics2-s3a-file-system.properties,hadoop-metrics2.properties
+25/12/10 15:40:30 WARN ResolveWriteToStream: spark.sql.adaptive.enabled is not supported in streaming DataFrames/Datasets and will be disabled.
+25/12/10 15:40:40 WARN package: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+
+5. Copy data from Docker MinIO container to local system
+
+docker cp minio:/data/datalake/bronze/stocks ./stock_data_delta
+
+6. This data can be now to Azure Storage and can be read in Azure databricks
+
+
+
+
+
+
