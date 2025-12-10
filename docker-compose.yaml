@@ -10,6 +10,7 @@ services:
       - "2181:2181"
 
   # 2. Kafka
+  # 👇 THIS IS KAFKA BROKER 1 👇
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
@@ -18,8 +19,11 @@ services:
     ports:
       - "9092:9092"
     environment:
+    # 👇 This gives the Broker its unique name/ID
       KAFKA_BROKER_ID: 1
+      # 👇 Connects this Broker to the Manager (Zookeeper)
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+       # 👇 Tells the world "I am listening on port 9092"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
