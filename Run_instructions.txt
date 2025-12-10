@@ -84,6 +84,46 @@ docker cp minio:/data/datalake/bronze/stocks ./stock_data_delta
 
 6. This data can be now to Azure Storage and can be read in Azure databricks
 
+ZOOKEEPER
+
+Think of Zookeeper as the "Manager" or "Traffic Cop" for Kafka.
+
+In your architecture, Kafka is a distributed system (even though we are running 1 broker, it is designed to run on 100s). Distributed systems need a centralized source of truth to agree on things.
+
+Here is exactly what Zookeeper does in your docker-compose setup:
+
+1. The Registry (Who is alive?)
+When your Kafka container starts up, the first thing it does is connect to Zookeeper and say, "I am here! My ID is Broker 1, and I am listening on port 9092."
+
+Zookeeper keeps a live list of all active Kafka brokers.
+
+If Kafka crashes, Zookeeper notices the connection dropped and updates the list so other systems don't try to send data to a dead broker.
+
+2. Leader Election (Who is in charge?)
+If you had multiple Kafka brokers (e.g., Broker A, Broker B, Broker C), one of them must be the "Controller" (the boss broker).
+
+Zookeeper runs an election to decide which broker is the Controller.
+
+If the Controller dies, Zookeeper runs a new election immediately.
+
+3. Metadata Storage (Where is the data?)
+Kafka doesn't store the "map" of where data is inside its own memory initially; it relies on Zookeeper.
+
+Topics: Zookeeper remembers that you created a topic named stock_prices.
+
+Partitions: It remembers how many partitions that topic has and where they are located.
+
+Why does your project need it?
+You might notice in your docker-compose.yaml under the Kafka service:
+
+YAML
+
+depends_on:
+  - zookeeper
+environment:
+  KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+This acts as a hard dependency. Kafka will not start without Zookeeper. It would crash immediately with an error saying "Could not connect to Zookeeper," because it wouldn't know who it is or where to store its metadata.
+
 
 
 
