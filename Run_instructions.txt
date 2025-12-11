@@ -91,6 +91,11 @@ Kafka Broker ( defined in docker-compose.yaml)
 👇
 Consumer - spark itself (spark_streaming.py)
 
+Component	  Role	              File in Project	      Key Library
+Broker	    The Server/Storage	docker-compose.yaml	  confluentinc/cp-kafka
+Producer	  The Data Source	    producer.py	          kafka-python-ng
+Consumer	  The Processor	      spark_streaming.py	  spark-sql-kafka (Maven Package)
+
 
 
 ZOOKEEPER
