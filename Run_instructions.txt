@@ -78,11 +78,20 @@ docker exec -it spark-master spark-submit --packages org.apache.spark:spark-sql-
 25/12/10 15:40:30 WARN ResolveWriteToStream: spark.sql.adaptive.enabled is not supported in streaming DataFrames/Datasets and will be disabled.
 25/12/10 15:40:40 WARN package: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
 
-5. Copy data from Docker MinIO container to local system
+5. Copy data from Docker MinIO container to the local system
 
 docker cp minio:/data/datalake/bronze/stocks ./stock_data_delta
 
-6. This data can be now to Azure Storage and can be read in Azure databricks
+6. This data can now be sent to Azure Storage and can be read in Azure Databricks
+
+KAFKA
+Producer - Yahoo Finance (producer.py)
+👇
+Kafka Broker ( defined in docker-compose.yaml)
+👇
+Consumer - spark itself (spark_streaming.py)
+
+
 
 ZOOKEEPER
 
