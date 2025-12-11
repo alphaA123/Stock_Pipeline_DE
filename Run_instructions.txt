@@ -138,6 +138,8 @@ environment:
   KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 This acts as a hard dependency. Kafka will not start without Zookeeper. It would crash immediately with an error saying "Could not connect to Zookeeper," because it wouldn't know who it is or where to store its metadata.
 
+Ⓒ Abhishek Kumar. All rights reserved.
+
 
 
 
